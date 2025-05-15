@@ -9,7 +9,7 @@ struct TimerSettingsView: View {
             Color(hex: "FCFBFA")
                 .ignoresSafeArea()
             
-            VStack(spacing: 24) {
+            VStack(spacing: 0) {
                 // Language Toggle
                 HStack {
                     Spacer()
@@ -26,73 +26,80 @@ struct TimerSettingsView: View {
                                     .fill(Color(.systemGray6))
                             )
                     }
-                    .padding()
                 }
+                .padding(.horizontal, 16)
+                .padding(.top, 16)
                 
                 // Title
                 Text(languageManager.localized("timer_settings"))
                     .font(.system(size: 24, weight: .bold))
-                    .padding(.top)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 20)
+                    .padding(.bottom, 16)
                 
-                // Timer Mode Selection
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(languageManager.localized("timer_mode"))
-                        .font(.system(size: 16, weight: .medium))
-                    Picker("", selection: $timerManager.selectedMode) {
-                        ForEach(TimerMode.allCases, id: \.self) { mode in
-                            Text(mode.localizedTitle)
-                                .tag(mode)
+                // Settings Groups
+                VStack(spacing: 32) {
+                    // Timer Mode Selection
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text(languageManager.localized("timer_mode"))
+                            .font(.system(size: 16, weight: .medium))
+                        Picker("", selection: $timerManager.selectedMode) {
+                            ForEach(TimerMode.allCases, id: \.self) { mode in
+                                Text(mode.localizedTitle)
+                                    .tag(mode)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                    }
+                    
+                    // Mode-specific Settings
+                    Group {
+                        switch timerManager.selectedMode {
+                        case .repeatCount:
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text(languageManager.localized("interval_duration"))
+                                    .font(.system(size: 16, weight: .medium))
+                                Picker("", selection: $timerManager.selectedInterval) {
+                                    ForEach(timerManager.availableIntervals, id: \.self) { interval in
+                                        Text("\(interval) \(languageManager.localized("minutes"))").tag(interval)
+                                    }
+                                }
+                                .pickerStyle(.menu)
+                                
+                                Text(languageManager.localized("repeat_count"))
+                                    .font(.system(size: 16, weight: .medium))
+                                    .padding(.top, 8)
+                                Picker("", selection: $timerManager.repeatCount) {
+                                    ForEach(1...10, id: \.self) { count in
+                                        Text("\(count) \(languageManager.localized("times"))").tag(count)
+                                    }
+                                }
+                                .pickerStyle(.menu)
+                            }
+                        case .endTime:
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text(languageManager.localized("end_time"))
+                                    .font(.system(size: 16, weight: .medium))
+                                DatePicker("", selection: $timerManager.endTime, displayedComponents: [.hourAndMinute])
+                                    .datePickerStyle(.compact)
+                                    .labelsHidden()
+                            }
+                        case .totalDuration:
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text(languageManager.localized("total_duration"))
+                                    .font(.system(size: 16, weight: .medium))
+                                Picker("", selection: $timerManager.totalDuration) {
+                                    ForEach([15, 25, 30, 45, 60, 90, 120], id: \.self) { minutes in
+                                        Text("\(minutes) \(languageManager.localized("minutes"))").tag(TimeInterval(minutes * 60))
+                                    }
+                                }
+                                .pickerStyle(.menu)
+                            }
                         }
                     }
-                    .pickerStyle(.segmented)
                 }
-                .padding(.horizontal)
-                
-                // Mode-specific Settings
-                Group {
-                    switch timerManager.selectedMode {
-                    case .repeatCount:
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(languageManager.localized("interval_duration"))
-                                .font(.system(size: 16, weight: .medium))
-                            Picker("", selection: $timerManager.selectedInterval) {
-                                ForEach(timerManager.availableIntervals, id: \.self) { interval in
-                                    Text("\(interval) \(languageManager.localized("minutes"))").tag(interval)
-                                }
-                            }
-                            .pickerStyle(.menu)
-                            
-                            Text(languageManager.localized("repeat_count"))
-                                .font(.system(size: 16, weight: .medium))
-                            Picker("", selection: $timerManager.repeatCount) {
-                                ForEach(1...10, id: \.self) { count in
-                                    Text("\(count) \(languageManager.localized("times"))").tag(count)
-                                }
-                            }
-                            .pickerStyle(.menu)
-                        }
-                    case .endTime:
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(languageManager.localized("end_time"))
-                                .font(.system(size: 16, weight: .medium))
-                            DatePicker("", selection: $timerManager.endTime, displayedComponents: [.hourAndMinute])
-                                .datePickerStyle(.compact)
-                                .labelsHidden()
-                        }
-                    case .totalDuration:
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(languageManager.localized("total_duration"))
-                                .font(.system(size: 16, weight: .medium))
-                            Picker("", selection: $timerManager.totalDuration) {
-                                ForEach([15, 25, 30, 45, 60, 90, 120], id: \.self) { minutes in
-                                    Text("\(minutes) \(languageManager.localized("minutes"))").tag(TimeInterval(minutes * 60))
-                                }
-                            }
-                            .pickerStyle(.menu)
-                        }
-                    }
-                }
-                .padding(.horizontal)
+                .padding(.horizontal, 16)
                 
                 Spacer()
             }

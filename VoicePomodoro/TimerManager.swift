@@ -152,6 +152,7 @@ class TimerManager: NSObject, ObservableObject {
         currentRepeatCount = 0 // 重置重复计数
         lastTickDate = Date()
         calculateTotalBlocks()
+        startTime = Date() // <--- 新增，记录开始时间
         setupCurrentCycleTime() // 确保每次都设置本周期的倒计时
         speakStartTime()
         startTicking()
@@ -164,6 +165,7 @@ class TimerManager: NSObject, ObservableObject {
             // 每轮都是完整间隔
             remainingTime = cycleSeconds
             intervalTime = cycleSeconds
+            startTime = Date() // <--- 新增，记录每轮开始时间
         case .endTime:
             let now = Date()
             var targetEndTime = endTime
@@ -174,12 +176,14 @@ class TimerManager: NSObject, ObservableObject {
             // 计算本轮剩余时间：如果剩余时间大于间隔，取间隔，否则取剩余时间
             remainingTime = min(cycleSeconds, max(0, timeToEnd))
             intervalTime = remainingTime
+            startTime = Date() // <--- 新增，记录每轮开始时间
         case .totalDuration:
             let elapsedTime = TimeInterval((currentCycle - 1) * selectedInterval * 60)
             let remainingDuration = totalDuration - elapsedTime
             // 计算本轮剩余时间：如果剩余时间大于间隔，取间隔，否则取剩余时间
             remainingTime = min(cycleSeconds, max(0, remainingDuration))
             intervalTime = remainingTime
+            startTime = Date() // <--- 新增，记录每轮开始时间
         }
         updateProgress()
     }
@@ -638,8 +642,7 @@ class TimerManager: NSObject, ObservableObject {
             let cycleDuration = TimeInterval(selectedInterval * 60)
             completedBlocks = min(Int(startToNow / cycleDuration), totalBlocks)
         case .totalDuration:
-            let focusedMinutes = Int(focusActiveSeconds / 60)
-            completedBlocks = min(focusedMinutes / selectedInterval, totalBlocks)
+            completedBlocks = min(currentCycle - 1, totalBlocks)
         }
     }
     
