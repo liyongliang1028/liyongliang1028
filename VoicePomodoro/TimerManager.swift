@@ -441,47 +441,90 @@ class TimerManager: NSObject, ObservableObject {
         isBreathing = true
         breathingCount = 0
         lastTickDate = nil
+        
         // 播放开始深呼吸提示
         let lang = LanguageManager.shared.isEnglish
-        let breathingStartPrompt = lang ? "Let's deep breath" : "让我们开始深呼吸"
+        let breathingStartPrompt = lang ? "Let's start deep breathing, 5 times" : "让我们开始深呼吸，一共5次"
         let breathingStartUtterance = AVSpeechUtterance(string: breathingStartPrompt)
         breathingStartUtterance.voice = AVSpeechSynthesisVoice(language: lang ? "en-US" : "zh-CN")
         breathingStartUtterance.volume = 1.0
         synthesizer.speak(breathingStartUtterance)
+        
+        // 2秒后开始第一次呼吸
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
+            self?.performInhale()
+        }
     }
     
-    private func continueBreathing() {
+    private func performInhale() {
+        guard breathingCount < totalBreathingCount else {
+            completeBreathing()
+            return
+        }
+        
+        // 吸气阶段
         let lang = LanguageManager.shared.isEnglish
-        if breathingCount < totalBreathingCount {
-            // 吸气
-            let breathInPrompt = lang ? "Breathe in" : "吸气"
-            let breathInUtterance = AVSpeechUtterance(string: breathInPrompt)
-            breathInUtterance.voice = AVSpeechSynthesisVoice(language: lang ? "en-US" : "zh-CN")
-            breathInUtterance.volume = 1.0
-            synthesizer.speak(breathInUtterance)
-            // 2.5秒后呼气
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self] in
-                guard let self = self else { return }
-                let breathOutPrompt = lang ? "Breathe out" : "呼气"
-                let breathOutUtterance = AVSpeechUtterance(string: breathOutPrompt)
-                breathOutUtterance.voice = AVSpeechSynthesisVoice(language: lang ? "en-US" : "zh-CN")
-                breathOutUtterance.volume = 1.0
-                self.synthesizer.speak(breathOutUtterance)
-                self.breathingCount += 1
-            }
-        } else {
-            // 深呼吸完成，恢复计时
-            isBreathing = false
-            breathingCount = 0
-            lastTickDate = Date()
-            // 恢复倒计时
-            startTicking()
-            isRunning = true
-            // 自动播报新一轮开始语音
-            if selectedMode == .repeatCount || selectedMode == .endTime || selectedMode == .totalDuration {
-                speakStartTime()
+        let breathInPrompt = lang ? "Breathe in" : "吸气"
+        let utterance = AVSpeechUtterance(string: breathInPrompt)
+        utterance.voice = AVSpeechSynthesisVoice(language: lang ? "en-US" : "zh-CN")
+        utterance.volume = 1.0
+        synthesizer.speak(utterance)
+        
+        // 3秒后转到呼气阶段
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in
+            self?.performExhale()
+        }
+    }
+    
+    private func performExhale() {
+        // 呼气阶段
+        let lang = LanguageManager.shared.isEnglish
+        let breathOutPrompt = lang ? "Breathe out" : "呼气"
+        let utterance = AVSpeechUtterance(string: breathOutPrompt)
+        utterance.voice = AVSpeechSynthesisVoice(language: lang ? "en-US" : "zh-CN")
+        utterance.volume = 1.0
+        synthesizer.speak(utterance)
+        
+        // 3秒后完成一个周期
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in
+            guard let self = self else { return }
+            self.breathingCount += 1
+            
+            // 判断是否已完成5次呼吸
+            if self.breathingCount < self.totalBreathingCount {
+                // 继续下一个周期
+                self.performInhale()
+            } else {
+                // 完成所有呼吸
+                self.completeBreathing()
             }
         }
+    }
+    
+    private func completeBreathing() {
+        // 播放完成提示
+        let lang = LanguageManager.shared.isEnglish
+        let completionMessage = lang ? 
+            "Deep breathing completed. Let's continue focusing." :
+            "深呼吸完成了，让我们继续专注。"
+        let utterance = AVSpeechUtterance(string: completionMessage)
+        utterance.voice = AVSpeechSynthesisVoice(language: lang ? "en-US" : "zh-CN")
+        utterance.volume = 1.0
+        synthesizer.speak(utterance)
+        
+        // 2秒后开始下一个周期
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
+            guard let self = self else { return }
+            self.isBreathing = false
+            self.lastTickDate = Date()
+            self.handleNextCycle()
+        }
+    }
+    
+    // 不再需要原来的continueBreathing方法，移除或注释它，避免影响新逻辑
+    private func continueBreathing() {
+        // 此方法已被新的呼吸流程替代
+        // 保留空方法以避免潜在的引用错误
     }
     
     func pauseTimer() {
@@ -762,10 +805,12 @@ class TimerManager: NSObject, ObservableObject {
 // 修改AVSpeechSynthesizerDelegate扩展
 extension TimerManager: AVSpeechSynthesizerDelegate {
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
+        // u5728u547cu5438u6a21u5f0fu4e0bu4ec0u4e48u4e5fu4e0du505auff0cu56e0u4e3au6211u4eecu73b0u5728u4f7fu7528u5b9au65f6u5668u63a7u5236u547cu5438u5faau73af
         if isBreathing {
-            continueBreathing()
             return
         }
+        
+        // u975eu547cu5438u72b6u6001uff0cu5982u679cu8ba1u65f6u5668u8fd0u884cu4e2du4e14u672au6682u505cuff0cu7ee7u7eedu8ba1u65f6
         if isRunning && !isPaused {
             lastTickDate = Date()
             startTicking()
