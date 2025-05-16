@@ -230,39 +230,110 @@ class TimerManager: NSObject, ObservableObject {
         timer?.cancel()
         isRunning = false
         
+        // u68c0u67e5u662fu5426u662fu6700u540eu4e00u4e2au5468u671f
+        let isLastCycle = checkIsLastCycle()
+        if isLastCycle {
+            completedBlocks = totalBlocks
+            speakEndTime()
+            stopTimer()
+            return
+        }
+        
+        // u64adu653eu5468u671fu7ed3u675fu63d0u793a
+        speakCycleEndNotice()
+        
+        // u68c0u67e5u662fu5426u542fu7528u4e86u6df1u547cu5438u5f15u5bfc
+        if enableBreathingPrompt {
+            // u5ef6u8fdfu7a0du7a0du518du5f00u59cbu6df1u547cu5438uff0cu7ed9u7528u6237u65f6u95f4u7406u89e3u8fd9u4e00u5468u671fu7ed3u675fu4e86
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
+                guard let self = self else { return }
+                self.startBreathing()
+            }
+        } else {
+            // u5982u679cu6ca1u542fu7528u6df1u547cu5438uff0cu76f4u63a5u5f00u59cbu4e0bu4e00u4e2au5468u671f
+            prepareForNextCycle()
+        }
+    }
+    
+    // u68c0u67e5u662fu5426u662fu6700u540eu4e00u4e2au5468u671f
+    private func checkIsLastCycle() -> Bool {
         switch selectedMode {
         case .repeatCount:
-            currentRepeatCount += 1
-            if currentRepeatCount >= repeatCount {
-                completedBlocks = totalBlocks
-                speakEndTime()
-                stopTimer()
-                return
-            }
-            speakCycleEndAndStart()
+            return currentRepeatCount + 1 >= repeatCount
         case .endTime:
-            if Date() >= endTime {
-                completedBlocks = totalBlocks
-                speakEndTime()
-                stopTimer()
-                return
-            }
-            speakCycleEndAndStart()
+            return Date() >= endTime
         case .totalDuration:
             let completedTime = TimeInterval(currentCycle * selectedInterval * 60)
-            if completedTime >= totalDuration {
-                completedBlocks = totalBlocks
-                speakEndTime()
-                stopTimer()
-                return
-            }
-            speakCycleEndAndStart()
+            return completedTime >= totalDuration
         }
+    }
+    
+    // u64adu653eu5468u671fu7ed3u675fu63d0u793a
+    private func speakCycleEndNotice() {
+        let lang = LanguageManager.shared.isEnglish
+        let interval = selectedInterval
+        let message = lang ? 
+            "\(interval) minutes completed. Take a break." :
+            "\(interval)分钟完成了，休息一下。"
+        
+        let utterance = AVSpeechUtterance(string: message)
+        utterance.voice = AVSpeechSynthesisVoice(language: lang ? "en-US" : "zh-CN")
+        utterance.pitchMultiplier = 1.0
+        utterance.volume = 1.0
+        synthesizer.speak(utterance)
+    }
+    
+    // u51c6u5907u4e0bu4e00u4e2au5468u671f
+    private func prepareForNextCycle() {
         currentCycle += 1
+        currentRepeatCount += 1
         updateCompletedBlocks()
-        setupCurrentCycleTime() // 确保每次新周期都设置本周期的倒计时
-        isRunning = true
-        startTicking()
+        setupCurrentCycleTime()
+        
+        // u64adu653eu65b0u5468u671fu5f00u59cbu63d0u793a
+        speakNewCycleStart()
+        
+        // u5ef6u8fdfu7a0du7a0du518du5f00u59cbu8ba1u65f6uff0cu7ed9u7528u6237u65f6u95f4u51c6u5907
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
+            guard let self = self else { return }
+            self.isRunning = true
+            self.startTicking()
+        }
+    }
+    
+    // u64adu653eu65b0u5468u671fu5f00u59cbu63d0u793a
+    private func speakNewCycleStart() {
+        let lang = LanguageManager.shared.isEnglish
+        let interval = selectedInterval
+        let message = lang ?
+            "Starting next \(interval) minutes focus time" :
+            "开始下一个\(interval)分钟专注时间"
+        
+        let utterance = AVSpeechUtterance(string: message)
+        utterance.voice = AVSpeechSynthesisVoice(language: lang ? "en-US" : "zh-CN")
+        utterance.pitchMultiplier = 1.0
+        utterance.volume = 1.0
+        synthesizer.speak(utterance)
+    }
+    
+    private func completeBreathing() {
+        // u64adu653eu5b8cu6210u63d0u793a
+        let lang = LanguageManager.shared.isEnglish
+        let completionMessage = lang ? 
+            "Deep breathing completed. Let's continue focusing." :
+            "u6df1u547cu5438u5b8cu6210u4e86uff0cu8ba9u6211u4eceu7ee7u7eedu4e13u6ce8u3002"
+        let utterance = AVSpeechUtterance(string: completionMessage)
+        utterance.voice = AVSpeechSynthesisVoice(language: lang ? "en-US" : "zh-CN")
+        utterance.volume = 1.0
+        synthesizer.speak(utterance)
+        
+        // 2u79d2u540eu5f00u59cbu4e0bu4e00u4e2au5468u671f
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
+            guard let self = self else { return }
+            self.isBreathing = false
+            self.lastTickDate = Date()
+            self.prepareForNextCycle()
+        }
     }
     
     func announceTime(isStart: Bool) {
@@ -498,26 +569,6 @@ class TimerManager: NSObject, ObservableObject {
                 // 完成所有呼吸
                 self.completeBreathing()
             }
-        }
-    }
-    
-    private func completeBreathing() {
-        // 播放完成提示
-        let lang = LanguageManager.shared.isEnglish
-        let completionMessage = lang ? 
-            "Deep breathing completed. Let's continue focusing." :
-            "深呼吸完成了，让我们继续专注。"
-        let utterance = AVSpeechUtterance(string: completionMessage)
-        utterance.voice = AVSpeechSynthesisVoice(language: lang ? "en-US" : "zh-CN")
-        utterance.volume = 1.0
-        synthesizer.speak(utterance)
-        
-        // 2秒后开始下一个周期
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
-            guard let self = self else { return }
-            self.isBreathing = false
-            self.lastTickDate = Date()
-            self.handleNextCycle()
         }
     }
     
