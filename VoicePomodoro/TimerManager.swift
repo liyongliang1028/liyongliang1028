@@ -133,6 +133,10 @@ class TimerManager: NSObject, ObservableObject {
         return String(format: "%02d:%02d", minutes, seconds)
     }
     
+    // 添加新的属性来跟踪暂停/恢复读音提示播放状态
+    private var hasPausedThisSession = false
+    private var hasResumedThisSession = false
+    
     override init() {
         super.init()
         synthesizer.delegate = self
@@ -486,14 +490,21 @@ class TimerManager: NSObject, ObservableObject {
         timer?.cancel()
         timer = nil
         lastTickDate = nil
-        // 播放暂停提示音
-        let lang = LanguageManager.shared.isEnglish
-        let pauseSound = lang ? "Timer paused" : "计时器已暂停"
-        let utterance = AVSpeechUtterance(string: pauseSound)
-        utterance.voice = AVSpeechSynthesisVoice(language: lang ? "en-US" : "zh-CN")
-        utterance.pitchMultiplier = 1.0
-        utterance.volume = 1.0
-        synthesizer.speak(utterance)
+        
+        // 只在本次会话未播放过暂停提示时才播放
+        if !hasPausedThisSession {
+            // 播放暂停提示音
+            let lang = LanguageManager.shared.isEnglish
+            let pauseSound = lang ? "Timer paused" : "计时器已暂停"
+            let utterance = AVSpeechUtterance(string: pauseSound)
+            utterance.voice = AVSpeechSynthesisVoice(language: lang ? "en-US" : "zh-CN")
+            utterance.pitchMultiplier = 1.0
+            utterance.volume = 1.0
+            synthesizer.speak(utterance)
+            
+            // 标记已播放暂停提示
+            hasPausedThisSession = true
+        }
     }
     
     func resumeTimer() {
@@ -502,14 +513,21 @@ class TimerManager: NSObject, ObservableObject {
         isRunning = true
         lastTickDate = Date()
         startTicking()
-        // 播放继续提示音
-        let lang = LanguageManager.shared.isEnglish
-        let resumeSound = lang ? "Timer resumed" : "计时继续"
-        let utterance = AVSpeechUtterance(string: resumeSound)
-        utterance.voice = AVSpeechSynthesisVoice(language: lang ? "en-US" : "zh-CN")
-        utterance.pitchMultiplier = 1.0
-        utterance.volume = 1.0
-        synthesizer.speak(utterance)
+        
+        // 只在本次会话未播放过恢复提示时才播放
+        if !hasResumedThisSession {
+            // 播放继续提示音
+            let lang = LanguageManager.shared.isEnglish
+            let resumeSound = lang ? "Timer resumed" : "计时继续"
+            let utterance = AVSpeechUtterance(string: resumeSound)
+            utterance.voice = AVSpeechSynthesisVoice(language: lang ? "en-US" : "zh-CN")
+            utterance.pitchMultiplier = 1.0
+            utterance.volume = 1.0
+            synthesizer.speak(utterance)
+            
+            // 标记已播放恢复提示
+            hasResumedThisSession = true
+        }
     }
     
     func stopTimer() {
@@ -518,6 +536,10 @@ class TimerManager: NSObject, ObservableObject {
         timer?.cancel()
         timer = nil
         lastTickDate = nil
+        
+        // 重置暂停/恢复提示状态，为下一次计时清除状态
+        hasPausedThisSession = false
+        hasResumedThisSession = false
     }
     
     private func checkVoiceAnnouncement() {
@@ -729,7 +751,11 @@ class TimerManager: NSObject, ObservableObject {
         lastReminderTime = nil
         isBreathing = false
         breathingCount = 0
-        setupCurrentCycleTime() // 保证重置后倒计时为下一个周期的间隔
+        setupCurrentCycleTime() // u4fddu8bc1u91cdu7f6eu540eu5012u8ba1u65f6u4e3au4e0bu4e00u4e2au5468u671fu7684u95f4u9694
+        
+        // u91cdu7f6eu6682u505c/u6062u590du63d0u793au72b6u6001uff0cu4e3au4e0bu4e00u6b21u8ba1u65f6u505au51c6u5907
+        hasPausedThisSession = false
+        hasResumedThisSession = false
     }
 }
 
