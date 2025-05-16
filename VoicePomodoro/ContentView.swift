@@ -287,8 +287,10 @@ struct ContentView: View {
                         // 冥想动画或倒计时数字
                         if timerManager.isBreathing {
                             VStack(spacing: 16) {
-                                Text("🧘")
-                                    .font(.system(size: 100))
+                                Image("BreathingImage")
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(width: 180, height: 180)
                                     .scaleEffect(showMeditation ? 1.1 : 0.9)
                                     .animation(Animation.easeInOut(duration: 0.8).repeatForever(autoreverses: true), value: showMeditation)
                                 Text(languageManager.isEnglish ? "Deep Breathing..." : "深呼吸中...")
