@@ -8,6 +8,7 @@ extension DesignSystem { }
 struct PostTimerBreakView: View {
     @Binding var timerManager: TimerManager
     @ObservedObject private var languageManager = LanguageManager.shared
+    @Environment(\.colorScheme) private var colorScheme
     @State private var breathingCount = 0
     @State private var isBreathing = false
     @State private var showConfetti = false
@@ -26,12 +27,13 @@ struct PostTimerBreakView: View {
             }
         }
         
-        var color: Color {
+        func color(for colorScheme: ColorScheme) -> Color {
+            let theme = ThemeManager.shared.currentTheme(for: colorScheme)
             switch self {
-            case .inhale: return DesignSystem.tomatoRed
-            case .hold: return .purple
-            case .exhale: return .green
-            case .rest: return .gray
+            case .inhale: return theme.primary
+            case .hold: return colorScheme == .dark ? Color.purple.opacity(0.8) : Color.purple
+            case .exhale: return colorScheme == .dark ? Color.green.opacity(0.8) : Color.green
+            case .rest: return theme.secondaryText
             }
         }
     }
@@ -39,7 +41,7 @@ struct PostTimerBreakView: View {
     var body: some View {
         ZStack {
             // Background
-            Color(hex: "FCFBFA")
+            ThemeManager.shared.currentTheme(for: colorScheme).background
                 .ignoresSafeArea()
             
             // Main Content
@@ -48,11 +50,11 @@ struct PostTimerBreakView: View {
                 VStack(spacing: 20) {
                     Text(languageManager.localized("great_job"))
                         .font(.system(size: 32, weight: .bold))
-                        .foregroundColor(DesignSystem.tomatoRed)
+                        .foregroundColor(ThemeManager.shared.currentTheme(for: colorScheme).primary)
                     
                     Text(languageManager.localized("mindful_break"))
                         .font(.system(size: 20, weight: .medium))
-                        .foregroundColor(.gray)
+                        .foregroundColor(ThemeManager.shared.currentTheme(for: colorScheme).secondaryText)
                     
                     Text("🧘‍♀️")
                         .font(.system(size: 80))
@@ -63,12 +65,12 @@ struct PostTimerBreakView: View {
                 // Breathing Circle
                 ZStack {
                     Circle()
-                        .stroke(Color.gray.opacity(0.2), lineWidth: 20)
+                        .stroke(ThemeManager.shared.currentTheme(for: colorScheme).border, lineWidth: 20)
                         .frame(width: 200, height: 200)
                     
                     Circle()
                         .trim(from: 0, to: breathingProgress)
-                        .stroke(breathingPhase.color, style: StrokeStyle(lineWidth: 20, lineCap: .round))
+                        .stroke(breathingPhase.color(for: colorScheme), style: StrokeStyle(lineWidth: 20, lineCap: .round))
                         .frame(width: 200, height: 200)
                         .rotationEffect(.degrees(-90))
                         .animation(.linear(duration: breathingPhase.duration), value: breathingPhase)
@@ -77,11 +79,11 @@ struct PostTimerBreakView: View {
                         if isBreathing {
                             Text("\(breathingCount)/5")
                                 .font(.system(size: 36, weight: .bold, design: .rounded))
-                                .foregroundColor(breathingPhase.color)
+                                .foregroundColor(breathingPhase.color(for: colorScheme))
                             
                             Text(phaseText)
                                 .font(.system(size: 18, weight: .medium))
-                                .foregroundColor(.gray)
+                                .foregroundColor(ThemeManager.shared.currentTheme(for: colorScheme).secondaryText)
                         }
                     }
                 }
@@ -108,7 +110,7 @@ struct PostTimerBreakView: View {
                     .frame(width: 240, height: 56)
                     .background(
                         RoundedRectangle(cornerRadius: 28)
-                            .fill(isBreathing ? Color.red : DesignSystem.tomatoRed)
+                            .fill(isBreathing ? Color.red : ThemeManager.shared.currentTheme(for: colorScheme).primary)
                     )
                     .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
                 }
@@ -117,7 +119,7 @@ struct PostTimerBreakView: View {
                 if !isBreathing {
                     Text(languageManager.localized("relax_tip"))
                         .font(.system(size: 16))
-                        .foregroundColor(.gray)
+                        .foregroundColor(ThemeManager.shared.currentTheme(for: colorScheme).secondaryText)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 40)
                 }

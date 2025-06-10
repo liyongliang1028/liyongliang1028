@@ -112,7 +112,7 @@ struct ContentView: View {
     private func reminderIntervalView() -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(languageManager.isEnglish ? "Voice Reminder Interval (min)" : "语音提醒间隔 (分钟)")
-                .font(.system(size: 17))
+                .font(.system(size: 15))
                 .foregroundColor(.primary)
             
             Button(action: {
@@ -194,12 +194,12 @@ struct ContentView: View {
                         Image("AppLogo")
                             .resizable()
                             .scaledToFit()
-                            .frame(height: 48)
+                            .frame(height: 40)
                             .padding(.leading, 16)
                         
                     Spacer()
                         
-                        // 语言切换控件 - 更贴近图片中的风格
+                        // 语言切换控件
                         HStack(spacing: 0) {
                             Button(action: {
                                 if languageManager.isEnglish {
@@ -207,10 +207,10 @@ struct ContentView: View {
                                 }
                             }) {
                                 Text("中文")
-                                    .font(.system(size: 17))
+                                    .font(.system(size: 15))
                                     .foregroundColor(languageManager.isEnglish ? .primary : .white)
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 8)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
                                     .background(
                                         Capsule()
                                             .fill(languageManager.isEnglish ? Color(.systemBackground) : Color.black)
@@ -223,10 +223,10 @@ struct ContentView: View {
                                 }
                             }) {
                                 Text("English")
-                                    .font(.system(size: 17))
+                                    .font(.system(size: 15))
                                     .foregroundColor(languageManager.isEnglish ? .white : .primary)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
                             .background(
                                 Capsule()
                                             .fill(languageManager.isEnglish ? Color.black : Color(.systemBackground))
@@ -238,42 +238,42 @@ struct ContentView: View {
                         .lightShadow()
                         .padding(.trailing, 16)
                     }
-                    .padding(.top, 20)
-                    .padding(.bottom, 24)
+                    .padding(.top, 12)
+                    .padding(.bottom, 12)
                     
-                    // 标题区域 - 不改变
-                VStack(spacing: 8) {
-                        Text(languageManager.isEnglish ? "VoicePomodoro" : "语音番茄时钟")
-                            .font(.system(size: 28, weight: .bold))
+                    // 标题区域
+                VStack(spacing: 2) {
+                        Text(languageManager.isEnglish ? "SilentTomato" : "安静番茄钟")
+                            .font(.system(size: 26, weight: .bold))
                             .foregroundColor(colorScheme == .dark ? .white : .black)
                         
                         Text(languageManager.isEnglish ? "Audio Focus Timer for ADHD" : "为ADHD设计的语音专注计时器")
-                            .font(.system(size: 16, weight: .medium))
+                            .font(.system(size: 14))
                             .foregroundColor(DesignSystem.tomatoRed)
                 }
-                    .padding(.bottom, 32)
+                    .padding(.bottom, 12)
                     
                     // 大型倒计时显示
                     ZStack {
                         // 进度环背景
                         Circle()
-                            .stroke(lineWidth: 15)
+                            .stroke(lineWidth: 12)
                             .opacity(0.2)
                             .foregroundColor(colorScheme == .dark ? Color.white : Color.gray)
-                            .frame(width: 320, height: 320)
+                            .frame(width: 240, height: 240)
                             .standardShadow()
                         
                         // 实际进度
                         Circle()
                             .trim(from: 0.0, to: timerManager.progressPercentage)
                             .stroke(style: StrokeStyle(
-                                lineWidth: 15,
+                                lineWidth: 12,
                                 lineCap: .round,
                                 lineJoin: .round
                             ))
                             .foregroundColor(timerManager.isPaused ? DesignSystem.tomatoRed : DesignSystem.tomatoRed)
                             .rotationEffect(Angle(degrees: 270.0))
-                            .frame(width: 320, height: 320)
+                            .frame(width: 240, height: 240)
                             .animation(.linear(duration: 0.2), value: timerManager.progressPercentage)
                             .shadow(color: DesignSystem.tomatoRed.opacity(0.5), radius: 5, x: 0, y: 0)
                             .opacity(timerManager.isPaused ? 0.7 : 1.0)
@@ -281,22 +281,22 @@ struct ContentView: View {
                         // 内部圆形
                         Circle()
                             .fill(colorScheme == .dark ? Color.black.opacity(0.8) : Color.white.opacity(0.8))
-                            .frame(width: 280, height: 280)
+                            .frame(width: 200, height: 200)
                             .standardShadow()
                         
                         // 冥想动画或倒计时数字
                         if timerManager.isBreathing {
-                            VStack(spacing: 16) {
+                            VStack(spacing: 12) {
                                 Image("BreathingImage")
                                     .resizable()
                                     .aspectRatio(contentMode: .fit)
-                                    .frame(width: 180, height: 180)
+                                    .frame(width: 160, height: 160)
                                     .scaleEffect(showMeditation ? 1.1 : 0.9)
                                     .animation(Animation.easeInOut(duration: 0.8).repeatForever(autoreverses: true), value: showMeditation)
                                 Text(languageManager.isEnglish ? "Deep Breathing..." : "深呼吸中...")
-                                    .font(.system(size: 28, weight: .medium))
+                                    .font(.system(size: 18, weight: .medium))
                                     .foregroundColor(DesignSystem.tomatoRed)
-                            }
+                }
                             .onAppear {
                                 showMeditation = true
                             }
@@ -307,17 +307,19 @@ struct ContentView: View {
                         } else {
                             VStack(spacing: 5) {
                                 Text(timerManager.timeString)
-                                    .font(.system(size: 80, weight: .regular, design: .monospaced))
+                                    .font(.system(size: 60, weight: .regular, design: .monospaced))
                                     .foregroundColor(colorScheme == .dark ? .white : .black)
+                                    .contentTransition(.numericText())
+                                    .animation(.easeInOut, value: timerManager.timeString)
                                     .opacity(timerManager.isPaused ? 0.7 : 1.0)
                                 
                                 if timerManager.isPaused {
                                     Text(languageManager.isEnglish ? "Paused" : "已暂停")
-                                        .font(.system(size: 16, weight: .medium))
+                                        .font(.system(size: 14, weight: .medium))
                                         .foregroundColor(DesignSystem.tomatoRed)
                                 } else if timerManager.isRunning {
                                     Text(languageManager.isEnglish ? "Focus Time" : "专注时间")
-                                        .font(.system(size: 16, weight: .medium))
+                                        .font(.system(size: 14, weight: .medium))
                                         .foregroundColor(DesignSystem.tomatoRed)
                                         .opacity(0.8)
                                 }
@@ -328,7 +330,10 @@ struct ContentView: View {
                     .animation(.spring(), value: timerManager.isRunning)
                     .animation(.spring(), value: timerManager.isPaused)
                     .onTapGesture {
-                        if timerManager.isRunning {
+                        if timerManager.isBreathing {
+                            // 如果正在深呼吸，跳过深呼吸直接开始下一个周期
+                            timerManager.skipBreathing()
+                        } else if timerManager.isRunning {
                             timerManager.pauseTimer()
                         } else if timerManager.isPaused {
                             timerManager.startTimer()
@@ -336,7 +341,7 @@ struct ContentView: View {
                             timerManager.startTimer()
                         }
                     }
-                    .padding(.bottom, 20)
+                    .padding(.bottom, 8)
                     
                     // 添加进度方块视图
                     ProgressBlocksView(
@@ -344,20 +349,20 @@ struct ContentView: View {
                         completedBlocks: timerManager.completedBlocks,
                         isDarkMode: colorScheme == .dark
                     )
-                    .padding(.bottom, 20)
+                    .padding(.bottom, 8)
                     
-                    // 分段控制器 - 使用iOS风格更新
+                    // 分段控制器
                     SegmentedControlView(
                         selection: $timerManager.selectedMode,
                         options: TimerMode.allCases,
                         isDarkMode: colorScheme == .dark
                     )
                     .standardShadow()
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 24)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 8)
                     
                     // 设置项 - 根据模式显示不同选项
-                    VStack(spacing: 20) {
+                    VStack(spacing: 12) {
                         switch timerManager.selectedMode {
                         case .repeatCount:
                             // 语音提醒间隔
@@ -366,7 +371,7 @@ struct ContentView: View {
                             // 重复次数
                             VStack(alignment: .leading, spacing: 8) {
                                 Text(languageManager.isEnglish ? "Repeat Count" : "重复次数")
-                                    .font(.system(size: 17))
+                                    .font(.system(size: 15))
                                     .foregroundColor(.primary)
                                 
                                 Button(action: {
@@ -414,7 +419,7 @@ struct ContentView: View {
                                         }
                                         
                                         Picker("", selection: $timerManager.repeatCount) {
-                                            ForEach(1...10, id: \.self) { count in
+                                            ForEach(1...25, id: \.self) { count in
                                                 Text("\(count)")
                                                     .tag(count)
                                             }
@@ -432,7 +437,7 @@ struct ContentView: View {
                             // 结束时间
                             VStack(alignment: .leading, spacing: 8) {
                                 Text(languageManager.isEnglish ? "End Time" : "结束时间")
-                                    .font(.system(size: 17))
+                                    .font(.system(size: 15))
                                     .foregroundColor(.primary)
                                 
                                 Button(action: {
@@ -494,7 +499,7 @@ struct ContentView: View {
                             // 专注时长
                             VStack(alignment: .leading, spacing: 8) {
                                 Text(languageManager.isEnglish ? "Focus Duration (hours)" : "专注时长 (小时)")
-                                    .font(.system(size: 17))
+                                    .font(.system(size: 15))
                                     .foregroundColor(.primary)
                                 
                                 Button(action: {
@@ -554,12 +559,12 @@ struct ContentView: View {
                             }
                         }
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 24)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 8)
                     
                     Divider()
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 16)
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 8)
                     
                     // 语音提醒方式 - 使用音频图标
                     HStack {
@@ -569,7 +574,7 @@ struct ContentView: View {
                             .frame(width: 24)
                         
                         Text(languageManager.isEnglish ? "Voice Reminder Mode" : "语音提醒方式")
-                            .font(.system(size: 17))
+                            .font(.system(size: 15))
                         
                         Spacer()
                         
@@ -582,17 +587,17 @@ struct ContentView: View {
                             .font(.system(size: 17))
                             .padding(.leading, 4)
                     }
-                    .padding(.vertical, 12)
-                    .padding(.horizontal, 20)
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 16)
                     .background(Color(.systemBackground).opacity(0.5))
                     .standardCornerRadius()
                     .standardShadow()
-                    .padding(.horizontal, 20)
+                    .padding(.horizontal, 16)
                     .onTapGesture {
                         // 切换提醒方式
                         timerManager.reminderType = timerManager.reminderType == .countdown ? .bothTimeAndCountdown : .countdown
                     }
-                    .padding(.bottom, 16)
+                    .padding(.bottom, 8)
                     
                     // 呼吸提示开关
                     HStack {
@@ -603,57 +608,68 @@ struct ContentView: View {
                             .frame(width: 24)
                         
                         Text(languageManager.isEnglish ? "Remind deep breathing 5x each interval" : "每次间隔 提醒深呼吸5次")
-                            .font(.system(size: 17))
+                            .font(.system(size: 15))
                         
-                        Spacer()
+                Spacer()
                         
                         Toggle("", isOn: $timerManager.enableBreathingPrompt)
                             .toggleStyle(SwitchToggleStyle(tint: DesignSystem.tomatoRed))
                             .labelsHidden()
                             .scaleEffect(0.85)
                     }
-                    .padding(.vertical, 12)
-                    .padding(.horizontal, 20)
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 16)
                     .background(Color(.systemBackground).opacity(0.5))
                     .standardCornerRadius()
                     .standardShadow()
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 36)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 8)
                     
-                    Spacer(minLength: 20)
+                    Spacer(minLength: 4)
                     
                     // 底部按钮区域
-                    HStack(spacing: 16) {
-                        // 开始/暂停按钮
-                        Button(action: {
-                            if timerManager.isRunning {
+                    HStack(spacing: 12) {
+                        if timerManager.isRunning {
+                            // 只显示"暂停"按钮
+                            Button(action: {
                                 timerManager.pauseTimer()
-                            } else {
-                                timerManager.startTimer()
+                            }) {
+                                Text(languageManager.localized("stop"))
+                                    .font(.system(size: 17, weight: .semibold))
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity, minHeight: 48)
+                                    .background(
+                                        Capsule()
+                                            .fill(DesignSystem.tomatoRed)
+                                    )
+                                    .standardShadow()
                             }
-                        }) {
-                            Text(timerManager.isRunning 
-                                ? languageManager.localized("stop") 
-                                : (timerManager.isPaused ? languageManager.localized("resume") : languageManager.localized("start")))
-                                .font(.system(size: 20, weight: .semibold))
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity, minHeight: 56)
-                                .background(
-                                    Capsule()
-                                        .fill(timerManager.isPaused ? DesignSystem.tomatoRed : Color.black)
-                                )
-                                .standardShadow()
+                            .pressableButton()
+                        } else {
+                            // 只显示"开始"按钮
+                            Button(action: {
+                                timerManager.startTimer()
+                            }) {
+                                Text(languageManager.localized("start"))
+                                    .font(.system(size: 17, weight: .semibold))
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity, minHeight: 48)
+                                    .background(
+                                        Capsule()
+                                            .fill(Color.black)
+                                    )
+                                    .standardShadow()
+                            }
+                            .pressableButton()
                         }
-                        .pressableButton()
-                        
-                        // 重置按钮
+                        // 重置按钮始终显示
                         Button(action: {
                             resetTimer()
                         }) {
                             Image(systemName: "arrow.clockwise")
-                                .font(.system(size: 20))
+                                .font(.system(size: 17))
                                 .foregroundColor(.gray)
-                                .frame(width: 56, height: 56)
+                                .frame(width: 48, height: 48)
                                 .background(
                                     Circle()
                                         .stroke(Color.gray.opacity(0.3), lineWidth: 1)
@@ -663,8 +679,8 @@ struct ContentView: View {
                         }
                         .pressableButton()
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 20)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 8)
                 }
                 .padding(.bottom, 16)
             }
@@ -707,7 +723,7 @@ struct SegmentedControlView: View {
                 }
                 .background(isDarkMode ? Color.black.opacity(0.1) : Color(.systemGray5))
                 .cornerRadius(selection == option ? DesignSystem.cornerRadius : 0)
-            }
+                }
         }
         .background(isDarkMode ? Color.black.opacity(0.1) : Color(.systemGray5))
         .cornerRadius(DesignSystem.cornerRadius)

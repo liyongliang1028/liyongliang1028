@@ -15,6 +15,7 @@ class LanguageManager: ObservableObject {
     }
     
     func toggleLanguage() {
+        objectWillChange.send()
         isEnglish.toggle()
     }
 } 
